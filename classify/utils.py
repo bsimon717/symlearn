@@ -8,6 +8,45 @@ from sklearn.metrics import accuracy_score
 
 from symlearn.loss import *
 
+def epoch_summary(reports, epoch, tags):
+
+    label_lookup = {}
+    label_lookup['personal'] = 'Average Personal Loss'
+    label_lookup['symbiotic'] = 'Average Symbiotic Loss'
+    label_lookup['accuracy'] = 'Accuracy'
+    label_lookup['embedding'] = 'Average Embedding Loss'
+    label_lookup['blame'] = 'Average Blame Loss'
+    
+    print(f'Summary:')
+    for i, report in enumerate(reports):
+        tag = tags[i]
+
+        print(f'\t- {tag}:')
+        for label in report.keys():
+            if report[label] == None:
+                continue
+            else:
+                if label != 'accuracy':
+                    print(f'\t\t-- {label_lookup[label]}: {report[label]:.4}')
+                else:
+                    print()
+                    print(f'\t\t-- {label_lookup[label]}: {report[label]:.4}')
+        print()
+
+    return
+
+def fill_lt_reports(lt_reports, reports, phase):
+
+    for lt_report, report in zip(lt_reports, reports):
+            keys = list(report.keys())
+            for key in keys:
+                if key not in lt_report[phase].keys():
+                    lt_report[phase][key] = [report[key]]
+                else:
+                    lt_report[phase][key].append(report[key])
+                    
+    return
+    
 def train_one_epoch(train_loader, models, opts, scheds, collab_params, temp, epoch, criterion, uplift=10, eps=1e-7, lamb=1.0):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -237,3 +276,133 @@ def eval_one_epoch(eval_loader, models, collab_params, temp, epoch, criterion, u
                 report['accuracy'] = None
     
     return reports
+
+def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, uplift=10, eps=1e-7, lamb=1.0):
+
+    train_loader, val_loader, test_loader = data_loaders
+    
+    len_train = len(train_loader)
+    len_valid = len(val_loader)
+    len_test = len(test_loader)
+
+    lt_reports = []
+
+    for i in range(len(models)):
+        lt_report_i = {
+        'Validation': {},
+        'Testing': {}
+        }
+
+        lt_reports.append(lt_report_i)
+
+    if load_at_uplift:
+        epoch_range = range(uplift, epochs)
+    else:
+        epoch_range = range(0, epochs)
+
+    for epoch in epoch_range:
+        
+        train_reports = train_one_epoch(train_loader, models, opts, scheds, collab_params, temp, epoch, criterion, uplift=uplift, eps=eps, lamb=lamb)
+        epoch_summary(train_reports, epoch, tags)
+        
+        valid_reports = eval_one_epoch(val_loader, models, collab_params, temp, epoch, criterion, uplift=uplift, eps=eps, lamb=lamb, phase='Validation')
+        epoch_summary(valid_reports, epoch, tags
+        fill_lt_reports(lt_reports, valid_reports, 'Validation')
+                            
+        if epoch%5 == 0 or epoch == epochs-1:
+            test_reports = eval_one_epoch(test_loader, models, collab_params, temp, epoch, criterion, uplift=uplift, eps=eps, lamb=lamb, phase='Testing')
+            epoch_summary(test_reports, epoch, tags)   
+            fill_lt_reports(lt_reports, test_reports, 'Testing')
+            
+        if epoch == uplift-1 and save_before_uplift == True:
+            for i, model in enumerate(models):
+                tag = tags[i]
+                opt = opts[i]
+                sched = scheds[i]
+                
+                checkpoint = {
+                    'epoch': epoch,
+                    'model': model.state_dict(),
+                    'opt': opt.state_dict(),
+                    'sched': sched.state_dict(),
+                    'last_step': sched.last_epoch
+                }
+                
+                torch.save(checkpoint, f'{save_path}/{tag}_pre-uplift.pt')
+            
+
+    for tag, lt_report in zip(tags, lt_reports):
+        for phase in lt_report.keys():
+            plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase=phase, tag=tag)
+
+    if save_end:
+        for i, model in enumerate(models):
+            tag = tags[i]
+            opt = opts[i]
+            sched = scheds[i]
+            
+            checkpoint = {
+                'epoch': epoch,
+                'model': model.state_dict(),
+                'opt': opt.state_dict(),
+                'sched': sched.state_dict(),
+                'last_step': sched.last_epoch
+            }
+            
+            torch.save(checkpoint, f'{save_path}/{tag}.pt')
+    return
+
+def plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase='Validation', tag='Model_A'):
+
+    if not load_at_uplift:
+        if phase == 'Validation':
+            full_axis = list(range(0, epochs))
+            post_uplift_axis = list(range(uplift, epochs))
+            
+        elif phase == 'Testing':
+            full_axis = list(np.arange(0,epochs,5)) + [epochs]
+            post_uplift_axis = list(np.arange(math.ceil(uplift/5)*5,epochs,5)) + [epochs]
+    else:
+        if phase == 'Validation':
+            full_axis = list(range(uplift, epochs))
+            post_uplift_axis = list(range(uplift, epochs))
+            
+        elif phase == 'Testing':
+            full_axis = list(np.arange(uplift,epochs,5)) + [epochs]
+            post_uplift_axis = list(np.arange(math.ceil(uplift/5)*5,epochs,5)) + [epochs]
+            
+    
+    for key in lt_report[phase].keys():
+        if tag == 'Readout' or key == 'blame':
+            x_axis = post_uplift_axis
+        else:
+            x_axis = full_axis
+
+        data_clean = [x for x in lt_report[phase][key] if x is not None]
+        
+        if key == 'accuracy' and tag == 'Readout':
+            idx_best = np.argmax(data_clean)
+            best_epoch = x_axis[idx_best]
+            best_acc = data_clean[idx_best]
+            label = f'{tag}: Best Accuracy=\n{best_acc:.4f} at Epoch {best_epoch}'
+        else:
+            label = f'{tag}: {label_lookup[key]}'
+        
+        try:
+            plt.plot(x_axis, data_clean, color='black', linestyle='-', label=label)
+        except:
+            print(f"Error Encountered Plotting {tag}'s {phase} {key.capitalize()} Report")
+            print('x axis: ', x_axis)
+            print('data: ', data_clean)
+            continue
+            
+        plt.title(f'{tag} {phase}: {label_lookup[key]} Per Epoch')
+        plt.xlabel('Epoch')
+        plt.ylabel(f'{label_lookup[key]}')
+        plt.grid()
+        if tag != 'Readout' and uplift != 0: plt.axvline(x=uplift, linestyle='dashed', color='red', label=f'Uplift: Epoch {uplift}')
+        plt.legend()
+        plt.savefig(f'{save_path}/{tag}/{phase}_{key}.png')
+        plt.clf()
+        
+    return
