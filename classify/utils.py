@@ -306,7 +306,7 @@ def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, crite
         epoch_summary(train_reports, epoch, tags)
         
         valid_reports = eval_one_epoch(val_loader, models, collab_params, temp, epoch, criterion, uplift=uplift, eps=eps, lamb=lamb, phase='Validation')
-        epoch_summary(valid_reports, epoch, tags
+        epoch_summary(valid_reports, epoch, tags)
         fill_lt_reports(lt_reports, valid_reports, 'Validation')
                             
         if epoch%5 == 0 or epoch == epochs-1:
