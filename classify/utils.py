@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -5,8 +6,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
-
+from datetime import datetime
 from symlearn.loss import *
+import math
+import matplotlib.pyplot as plt
 
 def epoch_summary(reports, epoch, tags):
 
@@ -277,8 +280,23 @@ def eval_one_epoch(eval_loader, models, collab_params, temp, epoch, criterion, u
     
     return reports
 
-def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, uplift=10, eps=1e-7, lamb=1.0):
+def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, tags=False, comment='', uplift=10, eps=1e-7, lamb=1.0, save_best=False, save_end=False, save_before_uplift=False, load_at_uplift=False):
+    now = datetime.now()
+    date_and_time = now.strftime('%d_%m_%y_%H_%M_%S')
+    
+    if comment != '':
+        save_path = f'./sym_logs/{date_and_time}_{comment}'
+    else:
+        save_path = f'./sym_logs/{date_and_time}'
+        
+    os.mkdir(save_path)
+    
+    if tags==False:
+        tags = [f'Model_{i}' for i in range(len(models)-1)] + ['Readout']
 
+    for tag in tags:
+        os.mkdir(f'{save_path}/{tag}')
+        
     train_loader, val_loader, test_loader = data_loaders
     
     len_train = len(train_loader)
@@ -309,7 +327,7 @@ def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, crite
         epoch_summary(valid_reports, epoch, tags)
         fill_lt_reports(lt_reports, valid_reports, 'Validation')
                             
-        if epoch%5 == 0 or epoch == epochs-1:
+        if (epoch%5 == 0 or epoch == epochs-1) and epoch != 0:
             test_reports = eval_one_epoch(test_loader, models, collab_params, temp, epoch, criterion, uplift=uplift, eps=eps, lamb=lamb, phase='Testing')
             epoch_summary(test_reports, epoch, tags)   
             fill_lt_reports(lt_reports, test_reports, 'Testing')
@@ -333,7 +351,7 @@ def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, crite
 
     for tag, lt_report in zip(tags, lt_reports):
         for phase in lt_report.keys():
-            plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase=phase, tag=tag)
+            plot_phase(lt_report, epochs, uplift, save_path, load_at_uplift=load_at_uplift, phase=phase, tag=tag)
 
     if save_end:
         for i, model in enumerate(models):
@@ -352,15 +370,22 @@ def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, crite
             torch.save(checkpoint, f'{save_path}/{tag}.pt')
     return
 
-def plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase='Validation', tag='Model_A'):
+def plot_phase(lt_report, epochs, uplift, save_path, load_at_uplift=False, phase='Validation', tag='Model_A'):
 
+    label_lookup = {}
+    label_lookup['personal'] = 'Average Personal Loss'
+    label_lookup['symbiotic'] = 'Average Symbiotic Loss'
+    label_lookup['accuracy'] = 'Accuracy'
+    label_lookup['embedding'] = 'Average Embedding Loss'
+    label_lookup['blame'] = 'Average Blame Loss'
+    
     if not load_at_uplift:
         if phase == 'Validation':
             full_axis = list(range(0, epochs))
             post_uplift_axis = list(range(uplift, epochs))
             
         elif phase == 'Testing':
-            full_axis = list(np.arange(0,epochs,5)) + [epochs]
+            full_axis = list(np.arange(5,epochs,5)) + [epochs]
             post_uplift_axis = list(np.arange(math.ceil(uplift/5)*5,epochs,5)) + [epochs]
     else:
         if phase == 'Validation':
@@ -371,6 +396,8 @@ def plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase='Va
             full_axis = list(np.arange(uplift,epochs,5)) + [epochs]
             post_uplift_axis = list(np.arange(math.ceil(uplift/5)*5,epochs,5)) + [epochs]
             
+    full_axis = np.array(full_axis)
+    post_uplift_axis = np.array(post_uplift_axis)
     
     for key in lt_report[phase].keys():
         if tag == 'Readout' or key == 'blame':
@@ -378,7 +405,7 @@ def plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase='Va
         else:
             x_axis = full_axis
 
-        data_clean = [x for x in lt_report[phase][key] if x is not None]
+        data_clean = [float(x) for x in lt_report[phase][key] if x is not None]
         
         if key == 'accuracy' and tag == 'Readout':
             idx_best = np.argmax(data_clean)
@@ -387,15 +414,15 @@ def plot_phase(lt_report, label_lookup, epochs, uplift, date_and_time, phase='Va
             label = f'{tag}: Best Accuracy=\n{best_acc:.4f} at Epoch {best_epoch}'
         else:
             label = f'{tag}: {label_lookup[key]}'
-        
+
         try:
-            plt.plot(x_axis, data_clean, color='black', linestyle='-', label=label)
+            plt.plot(x_axis, np.array(data_clean), color='black', linestyle='-', label=label)
         except:
             print(f"Error Encountered Plotting {tag}'s {phase} {key.capitalize()} Report")
             print('x axis: ', x_axis)
             print('data: ', data_clean)
             continue
-            
+        
         plt.title(f'{tag} {phase}: {label_lookup[key]} Per Epoch')
         plt.xlabel('Epoch')
         plt.ylabel(f'{label_lookup[key]}')
