@@ -280,16 +280,10 @@ def eval_one_epoch(eval_loader, models, collab_params, temp, epoch, criterion, u
     
     return reports
 
-def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, tags=False, comment='', uplift=10, eps=1e-7, lamb=1.0, save_best=False, save_end=False, save_before_uplift=False, load_at_uplift=False):
-    now = datetime.now()
-    date_and_time = now.strftime('%d_%m_%y_%H_%M_%S')
-    
-    if comment != '':
-        save_path = f'./sym_logs/{date_and_time}_{comment}'
-    else:
-        save_path = f'./sym_logs/{date_and_time}'
-        
-    os.mkdir(save_path)
+def train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, tags=False, uplift=10, eps=1e-7, lamb=1.0, save_path=False, save_best=False, save_end=False, save_before_uplift=False, load_at_uplift=False):
+
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
     
     if tags==False:
         tags = [f'Model_{i}' for i in range(len(models)-1)] + ['Readout']
