@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "symlearn"
+version = "0.1.0"
+requires-python = ">= 3.11"
+authors = [{name = "Benjamin D. Simon", email="bsimon71701@gmail.com"}]
+description = "A tool for symbiotically training multiple ML models."
+readme = "README.md"
+keywords = ["machine learning", "ensemble", "symbiotic"]
+dependencies = [
+    "torch>=2.9.0",
+    "numpy",
+    "matplotlib",
+    "scikit_learn",
+    "tqdm"
+]
+
+[project.urls]
+Repository = "https://github.com/bsimon717/symlearn"
