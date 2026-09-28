@@ -17,7 +17,7 @@ from datetime import datetime
 import math
 import matplotlib.pyplot as plt
 
-from symlearn.loss import *
+from symlearn.loss import embed_sim, embed_summand, embed_loss
 
 def reports_summary(reports: List[dict], epoch: int, tags: List[str]) -> None:
     """
