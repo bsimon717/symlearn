@@ -1,6 +1,6 @@
-# Symlearn
+# Symbiotic-Learning
 
-The *symlearn* package functions as an implementation of "symbiotic learning": a paradigm for simultaneously training multiple machine-learning models at once, in which collaboration between models is **intrinsic** and **incentivized**. The goal for this method is to effectively leverage the collaboration of relatively small models to achieve performance comparable to that of large, computationally expensive models. 
+The *symbiotic_learning* package functions as an implementation of "symbiotic learning": a paradigm for simultaneously training multiple machine-learning models at once, in which collaboration between models is **intrinsic** and **incentivized**. The goal for this method is to effectively leverage the collaboration of relatively small models to achieve performance comparable to that of large, computationally expensive models. 
 
 A key feature of this method is a minimally-sized attention block (termed the Readout) whose task is to aggregate the perspectives and decisions of the symbiotically trained upstream (pre-Readout) models, giving a final prediction. This attention block applies a linear transformation to the input logits before performing (multi-head) scaled dot-product attention. The output of this is then concatenated with a linear transformation of the input embeddings and passed through a user-specified number of fully connected layers, yielding the final prediction.
 
@@ -12,13 +12,13 @@ A system of symbiotically trained ML models with a Readout block is termed a *Sy
 
 ## Usage
 
-Currently, *symlearn* is only implemented for classification tasks.
+Currently, *symbiotic_learning* is only implemented for classification tasks.
 
 To use this package, first include the following imports in your training script:
 
 ```
-from symlearn.classify.readout import Readout
-import symlearn.classify.utils as classify
+from symbiotic_learning.classify.readout import Readout
+import symbiotic_learning.classify.utils as classify
 ```
 
 Then, include a block with a structure similar to the following:

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "symlearn"
+name = "symbiotic_learning"
 version = "0.1.0"
 requires-python = ">= 3.11"
 authors = [{name = "Benjamin D. Simon", email="bsimon71701@gmail.com"}]
