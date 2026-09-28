@@ -10,7 +10,6 @@ class Readout(nn.Module):
 
     def __init__(
             self, 
-            input_dim: int = 224, 
             hidden_dim: int = 32,
             preR_dim: int = 32,
             num_hidden: int = 1,
@@ -21,14 +20,12 @@ class Readout(nn.Module):
         
         super(Readout, self).__init__()
 
-        self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.preR_dim = preR_dim
         self.num_hidden = num_hidden
         self.num_classes = num_classes
         self.num_heads = num_heads
         self.num_preR = num_preR
-        self.dropout = dropout
         
         if self.num_heads > 1:
             self.multi_head = True

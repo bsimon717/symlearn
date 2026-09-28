@@ -8,6 +8,56 @@ A system of symbiotically trained ML models with a Readout block is termed a *Sy
 
 ---
 
+## Usage
+
+Currently, *symlearn* is only implemented for classification tasks.
+
+To use this package, first include the following imports in your training script:
+
+```
+from symlearn.classify.readout import Readout
+import symlearn.classify.utils as classify
+```
+
+Then, include a block with a structure similar to the following:
+
+```
+save_path = ## Path to sym_logs folder ##
+save_end = ## Boolean for saving models at the end of training ##
+save_best = ## Boolean for saving models at epoch of highest validation accuracy ##
+
+data_loaders = [train_loader, valid_loader, test_loader]
+
+num_classes = ## Task Specific ##
+
+preR_dim = ## Dimension of pre-Readout embeddings ##
+
+readout_hidden_dim = ## Dimension of fully-connected hidden layers ##
+readout_num_hidden = ## Number of fully-connected hidden layers ##
+
+collab_params = [## List of collaboration parameters ##]
+temp = ## Temperature hyperparameter in Readout loss ##
+lamb = ## Responsibility hyperparameter ##
+eps = 1e-7 ## Small value to avoid divide-by-zero errors ##
+
+models = []
+opts = []
+scheds = []
+num_preR = 3
+
+for _ in range(num_preR):
+    models.append( ## Base Model Here ## )
+    opts.append( ## Optimizer Here ## )
+    scheds.append( ## LR Scheduler ## )
+
+readout = Readout(hidden_dim=readout_hidden_dim, num_hidden=readout_num_hidden, num_classes=num_classes, num_heads=num_heads, num_preR=num_preR, preR_dim=preR_dim)
+
+classify.train(epochs, models, opts, scheds, data_loaders, collab_params, temp, criterion, uplift=uplift, eps=eps, lamb=lamb, save_path=save_path, save_end=save_end, save_best=save_best)
+
+```
+
+---
+
 ## Training
 $N$ pre-Readout models are initialized for the primary task, each having an "embedding block" and a "decision block": 
 
