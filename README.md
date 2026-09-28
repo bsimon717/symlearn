@@ -9,21 +9,21 @@ A system of symbiotically trained ML models with a Readout block is termed a *Sy
 ---
 
 ## Training
-$N$ pre-Readout models are initialized for the primary task, each having an "embedding block" and an block": 
+$N$ pre-Readout models are initialized for the primary task, each having an "embedding block" and a "decision block": 
 
 - The exact architecture of the embedding block is task-dependent; for an image-classification task, for example, the embedding block could consist of convolutional layers. 
 
-- The only requirement of the output block is that it must receive the concatenation of all $N$ embeddings as input to yield a task-specific prediction.
+- The only requirement of the decision block is that it must receive the concatenation of all $N$ embeddings as input to yield a task-specific prediction.
 
 
 ### Pre-Uplift
 1. Each pre-Readout model performs its initial assessment of the input data using its embedding block.
-2. The $N$ embeddings are concatenated and used as input to each of the models' output blocks, resulting in $N$ predictions.
+2. The $N$ embeddings are concatenated and used as input to each of the models' decision blocks, resulting in $N$ predictions.
 3. A pre-Readout model's total (symbiotic) loss is calculated using its own output as well as the outputs of its peers, with an additional term calculated from their initial embeddings to encourage diversity of perspectives. The weighting of each of these terms is determined by that model's *collaboration parameter*.
 
 ### Post-Uplift
 1. Each pre-Readout model performs its initial assessment of the input data using its embedding block.
-2. The $N$ embeddings are concatenated and used as input to each of the models' output blocks, resulting in $N$ predictions.
+2. The $N$ embeddings are concatenated and used as input to each of the models' decision blocks, resulting in $N$ predictions.
 3. The $N$ predictions are concatenated and passed to the Readout's attention layer. Additonally, the vector of pre-Readout embeddings is passed through a single fully-connected layer and concatenated with the attention layer's output. This vector is then passed through fully-connected layers, resulting in the final prediction.
 4. The Readout is then penalized on how strong its own prediction was compared to the strength of the pre-Readout predictions via a non-linearity.
 5. Each pre-Readout model's symbiotic loss then has a term added to it capturing that model's culpability for the Readout's mistakes. This term is called the model's "blame loss" and is scaled using a global hyperparameter (termed "responsibility").
