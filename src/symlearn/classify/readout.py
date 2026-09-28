@@ -16,7 +16,7 @@ class Readout(nn.Module):
             num_classes: int = 4, 
             num_heads: int = 1, 
             num_preR: int = 3, 
-            dropout: float = 0.0,) -> None:
+            attn_dropout: float = 0.0,) -> None:
         
         super(Readout, self).__init__()
 
@@ -26,6 +26,7 @@ class Readout(nn.Module):
         self.num_classes = num_classes
         self.num_heads = num_heads
         self.num_preR = num_preR
+        self.attn_dropout = attn_dropout
         
         if self.num_heads > 1:
             self.multi_head = True
@@ -68,7 +69,7 @@ class Readout(nn.Module):
             self.multihead_attn = nn.MultiheadAttention(
                 self.num_heads*self.hidden_dim, 
                 self.num_heads, 
-                dropout=self.dropout, 
+                dropout=self.attn_dropout, 
                 batch_first=True
                 )
             
@@ -94,7 +95,7 @@ class Readout(nn.Module):
         v = logits
 
         if not self.multi_head:
-            logits = F.scaled_dot_product_attention(q, k, v, dropout_p=self.dropout)
+            logits = F.scaled_dot_product_attention(q, k, v, dropout_p=self.attn_dropout)
         else:
             logits, _ = self.multihead_attn(q, k, v, need_weights=False)
 
