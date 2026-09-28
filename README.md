@@ -2,7 +2,9 @@
 
 The *symlearn* package functions as an implementation of "symbiotic learning": a paradigm for simultaneously training multiple machine-learning models at once, in which collaboration between models is **intrinsic** and **incentivized**. The goal for this method is to effectively leverage the collaboration of relatively small models to achieve performance comparable to that of large, computationally expensive models. 
 
-A key feature of this method is a minimally-sized attention block (termed the Readout) whose task is to aggregate the perspectives and decisions of the symbiotically trained upstream (pre-Readout) models, giving a final prediction. The appending of this block to the overall system occurs after a pre-determined number of training epochs, this event being termed *uplift*. As such, the framework is separated into two phases: pre-uplift and post-uplift.
+A key feature of this method is a minimally-sized attention block (termed the Readout) whose task is to aggregate the perspectives and decisions of the symbiotically trained upstream (pre-Readout) models, giving a final prediction. This attention block applies a linear transformation to the input logits before performing (multi-head) scaled dot-product attention. The output of this is then concatenated with a linear transformation of the input embeddings and passed through a user-specified number of fully connected layers, yielding the final prediction.
+
+The appending of this block to the overall system occurs after a pre-determined number of training epochs, this event being termed *uplift*. As such, the framework is separated into two phases: pre-uplift and post-uplift.
 
 A system of symbiotically trained ML models with a Readout block is termed a *Symbiotic Uplift Network*.
 
@@ -34,6 +36,7 @@ preR_dim = ## Dimension of pre-Readout embeddings ##
 
 readout_hidden_dim = ## Dimension of fully-connected hidden layers ##
 readout_num_hidden = ## Number of fully-connected hidden layers ##
+num_heads = ## Number of attention heads ##
 
 collab_params = [## List of collaboration parameters ##]
 temp = ## Temperature hyperparameter in Readout loss ##
