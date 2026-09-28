@@ -52,6 +52,10 @@ $$ L_{blame, i} = \lambda(\frac{L_i}{\sum L_i})*L_F $$
 
 $$ L_{Readout} = L_F (1+\exp[-\tau(\sum L_i)]) $$
 
-## Diagram of Symbiotic Uplift Network
+## Symbiotic Uplift Network Architecture
 
-TODO
+![Symbiotic Uplift Network Architecture](symlearn_arch.png)
+
+## Readout Architecture
+
+![Readout Architecture](symlearn_arch.png)
