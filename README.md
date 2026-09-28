@@ -9,7 +9,7 @@ A system of symbiotically trained ML models with a Readout block is termed a *Sy
 ---
 
 ## Training
-$N$ pre-Readout models are initialized for the primary task, each having an "embedding block" and an "output block": 
+$N$ pre-Readout models are initialized for the primary task, each having an "embedding block" and an block": 
 
 - The exact architecture of the embedding block is task-dependent; for an image-classification task, for example, the embedding block could consist of convolutional layers. 
 
@@ -58,4 +58,4 @@ $$ L_{Readout} = L_F (1+\exp[-\tau(\sum L_i)]) $$
 
 ## Readout Architecture
 
-![Readout Architecture](symlearn_arch.png)
+![Readout Architecture](readout_arch.png)
