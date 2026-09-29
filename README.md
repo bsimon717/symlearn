@@ -105,10 +105,14 @@ $$ L_{blame, i} = \lambda(\frac{L_i}{\sum L_i})*L_F $$
 
 $$ L_{Readout} = L_F (1+\exp[-\tau(\sum L_i)]) $$
 
-## Symbiotic Uplift Network Architecture
+## Example Symbiotic Uplift Network Architecture
 
 ![Symbiotic Uplift Network Architecture](symlearn_arch.png)
+
+This figure shows the architecture for a Symbiotic Uplift Network with three pre-Readout models.
 
 ## Readout Architecture
 
 ![Readout Architecture](readout_arch.png)
+
+This figure shows the architecture of the Readout block. The attention mechanism used is (multi-head) scaled dot-product attention.
