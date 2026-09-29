@@ -14,6 +14,10 @@ A system of symbiotically trained ML models with a Readout block is termed a *Sy
 
 Currently, *symbiotic_learning* is only implemented for classification tasks.
 
+To install this package, run the following command:
+
+`pip install -i https://test.pypi.org/simple/ symbiotic-learning==0.2.1`
+
 To use this package, first include the following imports in your training script:
 
 ```
